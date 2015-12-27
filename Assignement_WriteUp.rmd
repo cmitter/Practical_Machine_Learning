@@ -1,0 +1,59 @@
+Write Up for Prachtical Machine Learning Assignement
+
+**Goal**
+Predict on test cases if the participants are performing barbell lifts correctly and incorrectly in 5 different ways (A-E).
+
+**Data**
+Accelerometers on the belt, forearm, arm, and dumbell of 6 participants that have been classified accordingly.
+
+
+*Loading Libraries and Data*
+```{r, echo=FALSE}
+library(caret)
+library(randomForest)
+
+train<-read.csv("pml-training.csv")
+test<-read.csv("pml-testing.csv")
+```
+
+*Variable Selection*
+Looking at the data showed the most of the variables many empty fields or NA.
+Also the index variable, username, timestamps, windows were not used.
+The chose variables are listed in varsel.
+Variable 160 is "classe" for the training set and problem_id for the test set.
+
+```{r}
+varsel=c(8:11,37:49,60:68,84:86,102,113:124,140,151:160)
+train <-train[,varsel]
+test <-test[,varsel]
+```
+
+K-fold crossvalidation was planed, but due to limitations of my hardware, only one split was made using 75% the training data for training the model and 25% for estimating the out of sample error.
+
+```{r}
+inTrain<-createDataPartition(y=train$classe, p=0.75, list=FALSE)
+training<-train[inTrain,]
+testing<-train[-inTrain,]
+```
+
+
+*Create RandomForest Model*
+
+RandomForest Model was chose because two simpler approaches PLS and rpart trees did not result in very good out of sample errors.
+
+
+```{r, cache=TRUE}
+model = randomForest(classe ~ .,data = training,importance=TRUE)
+```
+
+*Estimation of out of sample errors* 
+```{r}
+RFPred <- predict(model, testing, type = "class")
+confusionMatrix(RFPred, testing$classe)
+```
+
+*Prediction of the Results*
+```{r}
+RFPrediction <- predict(model, test, type = "class")
+RFPrediction
+```
